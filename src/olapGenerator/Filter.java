@@ -1,7 +1,11 @@
 package olapGenerator;
 
-public interface Filter {
+public class Filter {
 
-	String whereClause();
+	private String whereClause;
+
+	public String whereClause(){
+		return this.whereClause;
+	}
 
 }
