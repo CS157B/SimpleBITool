@@ -18,6 +18,22 @@ public class Cube {
 		filters = new ArrayList<>();
 	}
 	
+	public List<Filter> getFilters(){
+		return this.filters;
+	}
+
+	public List<String> getValidFilterOperators(){
+		return Cube.validOperators;
+	}
+	
+	public Fact getFact(){
+		return this.fact;
+	}
+	
+	public List<Dimension> getDimension(){
+		return this.dimensions;
+	}
+	
 	public String generateCubeSQLString(){
 		String br = " \n";
 		
