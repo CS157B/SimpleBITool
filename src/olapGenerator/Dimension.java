@@ -100,6 +100,15 @@ public class Dimension {
 		return false;
 	}
 
+	public boolean hasConcept(String columnName){
+		for(Integer i : conceptHierarchy.keySet()){
+			if(conceptHierarchy.get(i) == columnName){
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public String getColumnName() {
 		return conceptHierarchy.get(currentHierarchyLevel);
 	}
