@@ -30,8 +30,31 @@ public class Cube {
 		return this.fact;
 	}
 	
-	public List<Dimension> getDimension(){
+	public List<Dimension> getDimensions(){
 		return this.dimensions;
+	}
+	
+	public Dimension getDimension(String dimensionTableName){
+		for(int i = 0; i < dimensions.size(); i++){
+			if(dimensions.get(i).getTableName().equals(dimensionTableName)){
+				return dimensions.get(i);
+			}
+		}
+		return null;
+	}
+	
+	public void addDimension(Dimension d){
+		dimensions.add(d);
+	}
+	
+	public boolean removeDimension(String dimensionTableName){
+		for(int i = 0; i < dimensions.size(); i++){
+			if(dimensions.get(i).getTableName().equals(dimensionTableName)){
+				dimensions.remove(i);
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public String generateCubeSQLString(){
