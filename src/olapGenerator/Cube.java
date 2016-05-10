@@ -104,8 +104,8 @@ public class Cube {
 		return olapQueryString;
 	}
 
-	public void addFilter(Dimension operand1, String operand2, String operator) throws InvalidOperatorException{
-			filters.add(new Filter(operand1, operand2, operator));
+	public void addFilter(String tableName, String columnName, String operand2, String operator) throws InvalidOperatorException{
+			filters.add(new Filter(tableName, columnName, operand2, operator));
 	}
 	
 	public boolean removeFilter(int i){
@@ -113,14 +113,16 @@ public class Cube {
 	}
 	
 	public class Filter {
-
-		private Dimension operand1;
+		
+		private String tableName;
+		private String columnName;
 		private String operand2;
 		private String operator;
 		
 
-		public Filter(Dimension operand1, String operand2, String operator) throws InvalidOperatorException {
-			this.operand1 = operand1;
+		public Filter(String tableName, String columnName, String operand2, String operator) throws InvalidOperatorException {
+			this.tableName = tableName;
+			this.columnName = columnName;
 			this.operand2 = operand2;
 			if(validOperators.contains(operator)){
 				this.operator = operator;
@@ -130,7 +132,7 @@ public class Cube {
 		}
 
 		public String getWhereClause(){
-				return operand1.getTableName() + "." + operand1.getColumnName() + " " + operator + " \"" + operand2 + "\"";
+				return this.tableName + "." + this.columnName + " " + operator + " \"" + operand2 + "\"";
 		}
 
 	}
