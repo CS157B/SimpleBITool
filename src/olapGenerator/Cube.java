@@ -108,6 +108,10 @@ public class Cube {
 			filters.add(new Filter(operand1, operand2, operator));
 	}
 	
+	public boolean removeFilter(int i){
+		return filters.remove(i) != null;
+	}
+	
 	public class Filter {
 
 		private Dimension operand1;
