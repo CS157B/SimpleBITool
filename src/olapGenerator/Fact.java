@@ -4,7 +4,7 @@ public class Fact {
 
 	private String columnName;
 	private String tableName;
-
+	
 	public Fact(String tableName, String columnName){
 		this.columnName = columnName;
 		this.tableName = tableName;

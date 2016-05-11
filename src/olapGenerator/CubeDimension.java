@@ -10,7 +10,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Dimension {
+public class CubeDimension {
 
 	private String tableName;
 	private String keyName;
@@ -18,11 +18,11 @@ public class Dimension {
 	private Map<Integer, String> conceptHierarchy;
 	private int currentHierarchyLevel;
 
-	public Dimension(String tableName, String columnName, String keyName) {
+	public CubeDimension(String tableName, String columnName, String keyName) {
 		this(tableName, columnName, keyName, true);
 	}
 
-	public Dimension(String tableName, String initialColumnName, String keyName, boolean isGrouped) {
+	public CubeDimension(String tableName, String initialColumnName, String keyName, boolean isGrouped) {
 		this.tableName = tableName;
 		this.keyName = keyName;
 		this.isGrouped = isGrouped;

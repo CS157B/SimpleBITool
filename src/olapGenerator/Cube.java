@@ -7,13 +7,22 @@ import java.util.stream.Collectors;
 
 public class Cube {
 	
-	private List<Dimension> dimensions;
+	private List<CubeDimension> dimensions;
 	private Fact fact;
 	private List<Filter> filters;
 	private final static List<String> validOperators = new ArrayList<String>(Arrays.asList("=", ">", "<", "<=", ">="));
 	
-	public Cube(Fact fact, List<Dimension> dimensions){
-		this.dimensions = dimensions;
+	public Cube(){
+		this(null, null);
+	}
+	
+	public Cube(Fact fact, List<CubeDimension> dimensions){
+		if(dimensions != null){
+			this.dimensions = dimensions;
+		}else{
+			this.dimensions = new ArrayList();
+		}
+		
 		this.fact = fact;
 		filters = new ArrayList<>();
 	}
@@ -30,11 +39,11 @@ public class Cube {
 		return this.fact;
 	}
 	
-	public List<Dimension> getDimensions(){
+	public List<CubeDimension> getDimensions(){
 		return this.dimensions;
 	}
 	
-	public Dimension getDimension(String dimensionTableName){
+	public CubeDimension getDimension(String dimensionTableName){
 		for(int i = 0; i < dimensions.size(); i++){
 			if(dimensions.get(i).getTableName().equals(dimensionTableName)){
 				return dimensions.get(i);
@@ -43,7 +52,7 @@ public class Cube {
 		return null;
 	}
 	
-	public void addDimension(Dimension d){
+	public void addDimension(CubeDimension d){
 		dimensions.add(d);
 	}
 	
@@ -58,16 +67,20 @@ public class Cube {
 	}
 	
 	public String generateCubeSQLString(){
+		if(dimensions == null || dimensions.isEmpty() || fact == null){
+			return null;
+		}
+		
 		String br = " \n";
 		
 		String olapQueryString = "SELECT" + br; //SELECT
-		for(Dimension d : dimensions){
+		for(CubeDimension d : dimensions){
 			olapQueryString += d.getTableName() + "." + d.getColumnName() + "," + br; //tableName.columnName,
 		}
 		olapQueryString += fact.getTableName() + "." + fact.getColumnName() + br; //tableName.columnName
 		
 		olapQueryString += "FROM"  + br; //FROM
-		for(Dimension d : dimensions){
+		for(CubeDimension d : dimensions){
 			olapQueryString += d.getTableName() + "," + br; //tableName,
 		}
 		olapQueryString += fact.getTableName() + br; //tableName
@@ -78,20 +91,20 @@ public class Cube {
 				olapQueryString +=  f.getWhereClause() + " AND" + br; //(boolean) AND
 			}
 		}
-		for(Dimension d : dimensions){
+		for(CubeDimension d : dimensions){
 			olapQueryString +=  d.getTableName() + "." + d.getKeyName() + " = " + fact.getTableName() + "." + d.getKeyName() + " AND" + br; //tableName.keyName = factTableName.dimensionKeyName
 		}
 		
 		olapQueryString = olapQueryString.substring(0, olapQueryString.length() - (" AND" + br).length()) + br; //Trim off last AND
 		
-		if(!dimensions.stream().filter(new Predicate<Dimension>() {
+		if(!dimensions.stream().filter(new Predicate<CubeDimension>() {
 			@Override
-			public boolean test(Dimension d) {
+			public boolean test(CubeDimension d) {
 				return d.isGrouped();
 			}
 		}).collect(Collectors.toList()).isEmpty()){ //If at least one dimension isGrouped
 			olapQueryString += "GROUP BY" + br;
-			for(Dimension d : dimensions){
+			for(CubeDimension d : dimensions){
 				if(d.isGrouped()){
 					olapQueryString += d.getTableName() + "." + d.getColumnName() + "," + br;
 				}

@@ -1,18 +1,31 @@
-package src.utility;
+package utility;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeListener;
+
+import olapGenerator.Cube;
+import olapGenerator.CubeDimension;
+import olapGenerator.Fact;
+
+
 
 public class Windows {
 	
-	public void Dimension()
+	private Cube cube;
+	private CubeDimension dim;
+	private Fact fact;
+	private BIToView bi;
+	
+	public void dimWindow(final ChangeListener lisenter, final Cube c)
 	{
 		JFrame dframe = new JFrame("Dimensions");
 	    int windowWidth = 400;           // Window width in pixels
@@ -20,24 +33,31 @@ public class Windows {
 	    dframe.setBounds(50, 100,       // Set position
 	         windowWidth, windowHeight);  // and size
 	    JButton button = new JButton("Submit");
-	    button.addActionListener(new ActionListener() {
-	        public void actionPerformed(ActionEvent e) {
-	           
-	        	dframe.dispose();
-	        }
-	    });
-	    dframe.setLayout(new GridLayout(3, 2));
+	    dframe.setLayout(new GridLayout(4, 2));
 	    
 	    dframe.add(new JLabel("Table Name:"));
-	    dframe.add(new JTextField());
+	    JTextField tname = new JTextField();
+	    dframe.add(tname);
 	    dframe.add(new JLabel("Initial Concept Column Name:"));
-	    dframe.add(new JTextField());
-	    dframe.add(button);
+	    JTextField cname = new JTextField();
+	    dframe.add(cname);
+	    dframe.add(new JLabel("Key Name:"));
+	    JTextField kname = new JTextField();
+	    dframe.add(kname);
 	    
+	    button.addActionListener(new ActionListener() {
+	        public void actionPerformed(ActionEvent e) {
+	        	dim = new CubeDimension(tname.getText(),cname.getText(),kname.getText());
+	        	c.addDimension(dim);
+	        	lisenter.stateChanged(null);
+	        	dframe.setVisible(false);
+	        	
+	        }
+	    });
+	    
+	    dframe.add(button);
 	    dframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	    dframe.setVisible(true);        // Display the window
-	    
-	    
 	}
 	
 	public void Concept()
@@ -143,12 +163,12 @@ public class Windows {
 	    
 	}
 	
-	public static void main(String args[]){
-		Windows win = new Windows();
-		win.Dimension();
-		win.Concept();
-		win.Filter();
-	}
+//	public static void main(String args[]){
+//		Windows win = new Windows();
+//		//win.dimWindow();
+//		win.Concept();
+//		win.Filter();
+//	}
 	
 
 
