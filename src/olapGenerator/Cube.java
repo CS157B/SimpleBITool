@@ -27,6 +27,10 @@ public class Cube {
 		filters = new ArrayList<>();
 	}
 	
+	public void addFact(Fact f){
+		fact = f;
+	}
+	
 	public List<Filter> getFilters(){
 		return this.filters;
 	}
@@ -75,9 +79,9 @@ public class Cube {
 		
 		String olapQueryString = "SELECT" + br; //SELECT
 		for(CubeDimension d : dimensions){
-			olapQueryString += d.getTableName() + "." + d.getColumnName() + "," + br; //tableName.columnName,
+			olapQueryString +=  d.getTableName() + "." + d.getColumnName() + "," + br; //tableName.columnName,
 		}
-		olapQueryString += fact.getTableName() + "." + fact.getColumnName() + br; //tableName.columnName
+		olapQueryString += "sum(" + fact.getTableName() + "." + fact.getColumnName() + ")" + br; //tableName.columnName
 		
 		olapQueryString += "FROM"  + br; //FROM
 		for(CubeDimension d : dimensions){
@@ -117,8 +121,10 @@ public class Cube {
 		return olapQueryString;
 	}
 
-	public void addFilter(String tableName, String columnName, String operand2, String operator) throws InvalidOperatorException{
-			filters.add(new Filter(tableName, columnName, operand2, operator));
+	public Filter addFilter(String tableName, String columnName, String operand2, String operator) throws InvalidOperatorException{
+			Filter f = new Filter(tableName, columnName, operand2, operator);
+		filters.add(f);
+		return f;
 	}
 	
 	public boolean removeFilter(int i){

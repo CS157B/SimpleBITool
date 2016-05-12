@@ -1,5 +1,4 @@
 package utility;
-
 import java.awt.*;
 import java.sql.*;
 import java.util.*;
@@ -15,9 +14,9 @@ public class TableFromMySqlDatabase extends JFrame
         ArrayList data = new ArrayList();
 
         //  Connect to an MySQL Database, run query, get result set
-        String url = "jdbc:mysql://localhost:3306/testDB";
+        String url = "jdbc:mysql://localhost:3306/projectdb";
         String userid = "root";
-        String password = "test";
+        String password = "Password1234!";
         //String sql = "SELECT * FROM product";
 
         // Java SE 7 has try-with-resources
@@ -101,11 +100,11 @@ public class TableFromMySqlDatabase extends JFrame
         getContentPane().add( buttonPanel, BorderLayout.SOUTH );
     }
 
-    /*public static void main(String[] args)
-    {
-        TableFromMySqlDatabase frame = new TableFromMySqlDatabase();
-        frame.setDefaultCloseOperation( EXIT_ON_CLOSE );
-        frame.pack();
-        frame.setVisible(true);
-    }*/
+//    public static void main(String[] args)
+//    {
+//        TableFromMySqlDatabase frame = new TableFromMySqlDatabase("SELECT * FROM product;");
+//        frame.setDefaultCloseOperation( EXIT_ON_CLOSE );
+//        frame.pack();
+//        frame.setVisible(true);
+//    }
 }

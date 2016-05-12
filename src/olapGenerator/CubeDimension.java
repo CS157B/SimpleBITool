@@ -1,5 +1,6 @@
 package olapGenerator;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -34,6 +35,33 @@ public class CubeDimension {
 
 	public Map<Integer, String> getConceptHierarchy() {
 		return this.conceptHierarchy;
+	}
+	
+	public String getCurrentConcept(){
+		return conceptHierarchy.get(currentHierarchyLevel);
+	}
+	
+	public List<String> getConceptList(){
+		List<String> conceptList = new ArrayList();
+		List<Integer> sortedKeys = conceptHierarchy.keySet().stream().sorted(new Comparator<Integer>() {
+
+			@Override
+			public int compare(Integer o1, Integer o2) {
+				if (o1 < o2) {
+					return 1;
+				} else if (o1 > o2) {
+					return -1;
+				} else {
+					return 0;
+				}
+			}
+
+		}).collect(Collectors.toList());
+		
+		for(int i : sortedKeys){
+			conceptList.add(conceptHierarchy.get(i));
+		}
+		return conceptList;
 	}
 
 	public boolean addConceptLevel(int hierarchyLevel, String columnName) {
