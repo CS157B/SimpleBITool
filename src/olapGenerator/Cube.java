@@ -71,8 +71,10 @@ public class Cube {
 	}
 	
 	public String generateCubeSQLString(){
-		if(dimensions == null || dimensions.isEmpty() || fact == null){
-			return null;
+		if(dimensions == null || dimensions.isEmpty()){
+			return "No dimension added";
+		}else if(fact == null){
+			return "No fact added";
 		}
 		
 		String br = " \n";

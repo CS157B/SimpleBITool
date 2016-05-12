@@ -23,6 +23,7 @@ public class BIToView extends Frame {
 	private JList dimensionBox;
 	private JList conceptBox;
 	private JList filterBox;
+	private JTextArea text;
 	private Fact fact;
 	private Cube cube = new Cube();
 	private CubeDimension dim;
@@ -40,7 +41,7 @@ public class BIToView extends Frame {
 		JPanel p1 = new JPanel();
 		p1.setLayout(new BoxLayout(p1, BoxLayout.X_AXIS));
 		p1.setMaximumSize(new Dimension(100, 100));
-		JTextArea text = new JTextArea(50,50);
+		text = new JTextArea(50,50);
 		text.setEditable(false);
 		p1.add(text);
 		main.add(p1, BorderLayout.WEST);
@@ -62,7 +63,7 @@ public class BIToView extends Frame {
 		dimAdd.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
 				dimWindow();
-			
+				
 	         }
 		});
 		JButton dimSub = new JButton("-");
@@ -71,6 +72,7 @@ public class BIToView extends Frame {
 				dimlistModel.removeElement((String)dimensionBox.getSelectedValue());
 				cube.removeDimension((String)dimensionBox.getSelectedValue());
 				conlistModel.removeAllElements();
+				refreshTextarea();
 	         }
 		});
 		JButton addfact = new JButton("Add a Fact");
@@ -139,6 +141,7 @@ public class BIToView extends Frame {
 				cube.getDimension(table).rollUp();
 				int index = cube.getDimension(table).getConceptList().indexOf(cube.getDimension(table).getCurrentConcept());
 				conceptBox.setSelectedIndex(index);
+				refreshTextarea();
 				
 	         }
 		});
@@ -149,6 +152,7 @@ public class BIToView extends Frame {
 				cube.getDimension(table).drillDown();
 				int index = cube.getDimension(table).getConceptList().indexOf(cube.getDimension(table).getCurrentConcept());
 				conceptBox.setSelectedIndex(index);
+				refreshTextarea();
 	         }
 		});
 		JScrollPane scrollPane_2 = new JScrollPane(conceptBox);
@@ -251,8 +255,9 @@ public class BIToView extends Frame {
 	        	CubeDimension dim = new CubeDimension(tname.getText(),cname.getText(),kname.getText());
 	        	cube.addDimension(dim);
 	        	dimlistModel.addElement(tname.getText());
-	      
+	        	refreshTextarea();
 	        	dframe.dispose();
+	        	
 	        	
 	        }
 	    });
@@ -409,6 +414,7 @@ public class BIToView extends Frame {
 	    	public void actionPerformed(ActionEvent e){
 	    		fact = new Fact(tname.getText(),cname.getText());
 	    		cube.addFact(fact);
+	    		refreshTextarea();
 	    		factframe.dispose();
 	    	}
 	    });
@@ -418,6 +424,11 @@ public class BIToView extends Frame {
 	    factframe.setVisible(true);        // Display the window
 		
 	}
+	
+	public void refreshTextarea(){
+		text.setText(cube.generateCubeSQLString());
+	}
+	
 	public static void main(String[] args) {
 		BIToView mc = new BIToView();
 	}
