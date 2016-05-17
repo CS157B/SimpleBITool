@@ -90,9 +90,31 @@ public class CubeDimension {
 		conceptHierarchy.put(hierarchyLevel, columnName);
 		return true;
 	}
+	
+	public boolean removeConceptLevel(int conceptLevel){
+		if(conceptHierarchy.containsKey(conceptLevel)){
+			conceptHierarchy.remove(conceptLevel);
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	public boolean removeConcept(String concept){
+		for(int i : conceptHierarchy.keySet()){
+			if(conceptHierarchy.get(i).equals(concept)){
+				conceptHierarchy.remove(i);
+				return true;
+			}
+		}
+		return false;
+	}
 
 	public boolean rollUp() {
+		System.out.print(conceptHierarchy.get(currentHierarchyLevel) + " > ");
 		List<Integer> sortedKeys = conceptHierarchy.keySet().stream().sorted(new Comparator<Integer>() {
+			
+			
 
 			@Override
 			public int compare(Integer o1, Integer o2) {
@@ -112,6 +134,7 @@ public class CubeDimension {
 			int i = itr.next();
 			if (i > currentHierarchyLevel) {
 				currentHierarchyLevel = i;
+				System.out.println(conceptHierarchy.get(currentHierarchyLevel));
 				return true;
 			}
 		}
@@ -119,6 +142,8 @@ public class CubeDimension {
 	}
 
 	public boolean drillDown() {
+		String temp = conceptHierarchy.get(currentHierarchyLevel);
+		
 		List<Integer> reverseSortedKeys = conceptHierarchy.keySet().stream().collect(Collectors.toList());
 
 		reverseSortedKeys.sort(new Comparator<Integer>() {
@@ -141,6 +166,7 @@ public class CubeDimension {
 			int i = itr.next();
 			if (i < currentHierarchyLevel) {
 				currentHierarchyLevel = i;
+				System.out.print(conceptHierarchy.get(currentHierarchyLevel) + " < " + temp);
 				return true;
 			}
 		}

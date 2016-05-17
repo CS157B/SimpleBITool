@@ -27,49 +27,6 @@ public class Cube {
 		filters = new ArrayList<>();
 	}
 	
-	public void addFact(Fact f){
-		fact = f;
-	}
-	
-	public List<Filter> getFilters(){
-		return this.filters;
-	}
-
-	public List<String> getValidFilterOperators(){
-		return Cube.validOperators;
-	}
-	
-	public Fact getFact(){
-		return this.fact;
-	}
-	
-	public List<CubeDimension> getDimensions(){
-		return this.dimensions;
-	}
-	
-	public CubeDimension getDimension(String dimensionTableName){
-		for(int i = 0; i < dimensions.size(); i++){
-			if(dimensions.get(i).getTableName().equals(dimensionTableName)){
-				return dimensions.get(i);
-			}
-		}
-		return null;
-	}
-	
-	public void addDimension(CubeDimension d){
-		dimensions.add(d);
-	}
-	
-	public boolean removeDimension(String dimensionTableName){
-		for(int i = 0; i < dimensions.size(); i++){
-			if(dimensions.get(i).getTableName().equals(dimensionTableName)){
-				dimensions.remove(i);
-				return true;
-			}
-		}
-		return false;
-	}
-	
 	public String generateCubeSQLString(){
 		if(dimensions == null || dimensions.isEmpty()){
 			return "No dimension added";
@@ -122,8 +79,54 @@ public class Cube {
 
 		return olapQueryString;
 	}
+	
+	public void addFact(Fact f){
+		fact = f;
+	}
+	
+	
+	
+	public Fact getFact(){
+		return this.fact;
+	}
+	
+	public List<CubeDimension> getDimensions(){
+		return this.dimensions;
+	}
+	
+	public CubeDimension getDimension(String dimensionTableName){
+		for(int i = 0; i < dimensions.size(); i++){
+			if(dimensions.get(i).getTableName().equals(dimensionTableName)){
+				return dimensions.get(i);
+			}
+		}
+		return null;
+	}
+	
+	public void addDimension(CubeDimension d){
+		dimensions.add(d);
+	}
+	
+	public boolean removeDimension(String dimensionTableName){
+		for(int i = 0; i < dimensions.size(); i++){
+			if(dimensions.get(i).getTableName().equals(dimensionTableName)){
+				dimensions.remove(i);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static ArrayList<String> VALID_OPERAND_TYPES = new ArrayList<>();
+	static{
+		VALID_OPERAND_TYPES.add("INT");
+		VALID_OPERAND_TYPES.add("STRING");
+	}
 
-	public Filter addFilter(String tableName, String columnName, String operand2, String operator) throws InvalidOperatorException{
+	public Filter addFilter(String tableName, String columnName, String operand2, String operator, String operandType) throws InvalidOperatorException, InvalidOperandTypeException{
+		if(!VALID_OPERAND_TYPES.contains(operandType)){
+			throw new InvalidOperandTypeException();
+		}
 			Filter f = new Filter(tableName, columnName, operand2, operator);
 		filters.add(f);
 		return f;
@@ -131,6 +134,14 @@ public class Cube {
 	
 	public boolean removeFilter(int i){
 		return filters.remove(i) != null;
+	}
+	
+	public List<Filter> getFilters(){
+		return this.filters;
+	}
+
+	public List<String> getValidFilterOperators(){
+		return Cube.validOperators;
 	}
 	
 	public class Filter {
@@ -170,6 +181,15 @@ public class Cube {
 		@Override
 		public String getMessage() {
 			return "Invalid operator: " + operator;
+		}
+	}
+	
+	public class InvalidOperandTypeException extends Exception{
+		private static final long serialVersionUID = 7863620656308722142L;
+		
+		@Override
+		public String getMessage() {
+			return "Invalid operand type";
 		}
 	}
 

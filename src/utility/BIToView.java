@@ -18,6 +18,7 @@ import javax.swing.event.ListSelectionListener;
 
 import olapGenerator.Cube;
 import olapGenerator.Cube.Filter;
+import olapGenerator.Cube.InvalidOperandTypeException;
 import olapGenerator.Cube.InvalidOperatorException;
 import olapGenerator.Fact;
 import olapGenerator.CubeDimension;
@@ -25,7 +26,7 @@ import olapGenerator.CubeDimension;
 public class BIToView extends Frame {
 
 	private JList dimensionBox;
-	private JList conceptBox;
+	private JList<String> conceptBox;
 	private JList filterBox;
 	private JTextArea text;
 	private Fact fact;
@@ -41,7 +42,7 @@ public class BIToView extends Frame {
 
 	public BIToView(List<CubeDimension> loadedDimensions, Fact loadedFact) {
 		for (CubeDimension c : loadedDimensions) {
-				cube.addDimension(c);
+			cube.addDimension(c);
 		}
 		if (loadedFact != null) {
 			cube.addFact(loadedFact);
@@ -69,7 +70,6 @@ public class BIToView extends Frame {
 		dimlistModel = new DefaultListModel();
 		conlistModel = new DefaultListModel();
 		fillistModel = new DefaultListModel();
-
 		dimensionBox = new JList(dimlistModel);
 		dimensionBox.setVisibleRowCount(5);
 
@@ -88,6 +88,7 @@ public class BIToView extends Frame {
 				dimlistModel.removeElement((String) dimensionBox.getSelectedValue());
 				cube.removeDimension((String) dimensionBox.getSelectedValue());
 				conlistModel.removeAllElements();
+				refreshDimensionList();
 				refreshTextarea();
 			}
 		});
@@ -112,14 +113,11 @@ public class BIToView extends Frame {
 			public void valueChanged(ListSelectionEvent e) {
 				if (dimensionBox.getSelectedValue() != null) {
 					String select = (String) dimensionBox.getSelectedValue();
-					Map<Integer, String> concept = cube.getDimension(select).getConceptHierarchy();
 					conlistModel.removeAllElements();
-					for (Map.Entry<Integer, String> entry : concept.entrySet()) {
-						conlistModel.addElement(entry.getValue());
+					for (String s : cube.getDimension(select).getConceptList()) {
+						conlistModel.addElement(s);
 					}
-					int index = cube.getDimension(select).getConceptList()
-							.indexOf(cube.getDimension(select).getCurrentConcept());
-					conceptBox.setSelectedIndex(index);
+					refreshConceptList();
 				}
 			}
 		});
@@ -136,17 +134,29 @@ public class BIToView extends Frame {
 		conAdd.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				conceptWindow((String) dimensionBox.getSelectedValue());
+				refreshConceptList();
+				refreshTextarea();
+			}
+		});
 
+		conceptBox.addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				String select = (String) dimensionBox.getSelectedValue();
+				int index = findIndexInListModel(conlistModel, cube.getDimension(select).getCurrentConcept());
+				conceptBox.setSelectedIndex(index);
 			}
 		});
 		JButton conSub = new JButton("-");
 		conSub.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String select1 = (String) conceptBox.getSelectedValue();
-				conlistModel.removeElement(select1);
-				cube.getDimension((String) dimensionBox.getSelectedValue()).getConceptHierarchy().values()
-						.remove(select1);
-
+				if (conceptBox.getModel().getSize() > 1) {
+					String select1 = (String) conceptBox.getSelectedValue();
+					conlistModel.removeElement(select1);
+					cube.getDimension((String) dimensionBox.getSelectedValue()).removeConcept(select1);
+					refreshConceptList();
+					refreshTextarea();
+				}
 			}
 		});
 		JButton rollUp = new JButton("Roll Up");
@@ -155,12 +165,10 @@ public class BIToView extends Frame {
 				String table = (String) dimensionBox.getSelectedValue();
 
 				cube.getDimension(table).rollUp();
-				int index = cube.getDimension(table).getConceptList()
-						.indexOf(cube.getDimension(table).getCurrentConcept());
-				
+				int index = findIndexInListModel(conceptBox.getModel(), cube.getDimension(table).getCurrentConcept());
 				conceptBox.setSelectedIndex(index);
+				refreshConceptList();
 				refreshTextarea();
-
 			}
 		});
 		JButton drillDown = new JButton("Drill Down");
@@ -168,9 +176,9 @@ public class BIToView extends Frame {
 			public void actionPerformed(ActionEvent e) {
 				String table = (String) dimensionBox.getSelectedValue();
 				cube.getDimension(table).drillDown();
-				int index = cube.getDimension(table).getConceptList()
-						.indexOf(cube.getDimension(table).getCurrentConcept());
+				int index = findIndexInListModel(conceptBox.getModel(), cube.getDimension(table).getCurrentConcept());
 				conceptBox.setSelectedIndex(index);
+				refreshConceptList();
 				refreshTextarea();
 			}
 		});
@@ -200,7 +208,8 @@ public class BIToView extends Frame {
 			public void actionPerformed(ActionEvent e) {
 
 				filterWindow();
-
+				refreshFilterList();
+				refreshTextarea();
 			}
 		});
 		JButton filSub = new JButton("-");
@@ -210,7 +219,8 @@ public class BIToView extends Frame {
 				int indextoRemove = filterBox.getSelectedIndex();
 				fillistModel.remove(indextoRemove);
 				cube.removeFilter(indextoRemove);
-
+				refreshFilterList();
+				refreshTextarea();
 			}
 		});
 		JScrollPane scrollPane_3 = new JScrollPane(filterBox);
@@ -235,10 +245,8 @@ public class BIToView extends Frame {
 				String q = cube.generateCubeSQLString();
 				text.setText(q);
 				TableFromMySqlDatabase query = new TableFromMySqlDatabase(q);
-				query.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				query.pack();
 				query.setVisible(true);
-
 			}
 		});
 
@@ -247,14 +255,21 @@ public class BIToView extends Frame {
 
 		main.pack();
 		main.setVisible(true);
+		refreshDimensionList();
+		refreshConceptList();
+		refreshFilterList();
 		refreshTextarea();
+		
+		if(dimensionBox.getModel().getSize() != 0){
+			dimensionBox.setSelectedIndex(0);
+		}
 	}
 
 	public BIToView(List<CubeDimension> dimensions) {
 		this(dimensions, null);
 	}
-	
-	public BIToView(Fact fact){
+
+	public BIToView(Fact fact) {
 		this(null, fact);
 	}
 
@@ -282,14 +297,11 @@ public class BIToView extends Frame {
 				CubeDimension dim = new CubeDimension(tname.getText(), cname.getText(), kname.getText());
 				cube.addDimension(dim);
 				dimlistModel.addElement(tname.getText());
-				refreshTextarea();
 				dframe.dispose();
-
 			}
 		});
 
 		dframe.add(button);
-		dframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		dframe.setVisible(true); // Display the window
 
 	}
@@ -315,16 +327,13 @@ public class BIToView extends Frame {
 				List<String> list = cube.getDimension(table).getConceptList();
 				conlistModel.removeAllElements();
 				for (String s : list) {
-
 					conlistModel.addElement(s);
 				}
-
 				cframe.dispose();
 			}
 		});
 		cframe.add(button);
 
-		cframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		cframe.setVisible(true); // Display the window
 
 	}
@@ -379,10 +388,13 @@ public class BIToView extends Frame {
 				// System.out.println(select2);
 
 				try {
-					Filter f = cube.addFilter(table2, column2, operand.getText(), select2);
-
-					fillistModel.addElement(f.getWhereClause());
+					Filter f = cube.addFilter(table2, column2, operand.getText(), select2, "");
+					refreshFilterList();
+					refreshTextarea();
 				} catch (InvalidOperatorException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (InvalidOperandTypeException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
@@ -412,7 +424,6 @@ public class BIToView extends Frame {
 
 		fframe.add(button);
 
-		fframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		fframe.setVisible(true); // Display the window
 
 	}
@@ -444,7 +455,6 @@ public class BIToView extends Frame {
 		});
 		factframe.add(button);
 
-		factframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		factframe.setVisible(true); // Display the window
 
 	}
@@ -452,40 +462,76 @@ public class BIToView extends Frame {
 	public void refreshTextarea() {
 		text.setText(cube.generateCubeSQLString());
 	}
-	
-	public void refreshLists(){
-		
+
+	public void refreshDimensionList() {
+		int selectedDimensionIndex = dimensionBox.getSelectedIndex();
+		if (selectedDimensionIndex > dimlistModel.size()) {
+			selectedDimensionIndex = 0;
+		}
+		dimlistModel.clear();
+		if (!cube.getDimensions().isEmpty()) {
+			for (int i = 0; i < cube.getDimensions().size(); i++) {
+				dimlistModel.addElement(cube.getDimensions().get(i).getTableName());
+			}
+			dimensionBox.setModel(dimlistModel);
+			dimensionBox.setSelectedIndex(selectedDimensionIndex);
+		}
+
 	}
-	
-	public int findIndexInListModel(ListModel<String> model, String targetString){	
-		for(int i = 0; i < model.getSize(); i++){
-			if(model.getElementAt(i).equals(targetString)){
+
+	public void refreshConceptList() {
+		String selectedConcept = conceptBox.getSelectedValue();
+		conlistModel.clear();
+		String selectedTable = (String) dimensionBox.getSelectedValue();
+		if (selectedTable != null) {
+			for (String s : cube.getDimension(selectedTable).getConceptList()) {
+				conlistModel.addElement(s);
+			}
+			conceptBox.setModel(conlistModel);
+			conceptBox.setSelectedIndex(findIndexInListModel(conlistModel, selectedConcept));
+		} else {
+			conceptBox.setModel(conlistModel);
+		}
+	}
+
+	public void refreshFilterList() {
+		fillistModel.clear();
+		for (Filter f : cube.getFilters()) {
+			fillistModel.addElement(f.getWhereClause());
+		}
+		filterBox.setModel(fillistModel);
+	}
+
+	public int findIndexInListModel(ListModel<String> model, String targetString) {
+		for (int i = 0; i < model.getSize(); i++) {
+			if (model.getElementAt(i).equals(targetString)) {
 				return i;
 			}
 		}
 		return -1;
-		
+
 	}
 
-	public static List<String> parseConcepts(String conceptsString){
+	public static List<String> parseConcepts(String conceptsString) {
 		Pattern stringPattern = Pattern.compile("([\\w\\d|_]+)");
 		ArrayList<String> stringList = new ArrayList<>();
 		Matcher m = stringPattern.matcher(conceptsString);
-		while(m.find()){
+		while (m.find()) {
 			stringList.add(m.group(0));
 		}
 		return stringList;
 	}
-	
+
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws FileNotFoundException {
 		if (args.length == 1) {
 			List<CubeDimension> dimensions = new ArrayList();
-			Fact fact= null;
+			Fact fact = null;
 			Scanner in = new Scanner(new File(args[0]));
 			Pattern dimensionPattern = Pattern.compile(
 					"(?:Dimension:\\s*?table=\")([\\w\\d|_]*)(?:\",\\s*?)(?:concepts=\"(.*)\")(?:, key=\")([\\w\\d|_]+)(?:\";)");
-			Pattern factPattern = Pattern.compile("(?:Fact:table=\")([\\w\\d|_]+)(?:\" fact_column=\")([\\w\\d|_]+)(?:\";)");
+			Pattern factPattern = Pattern
+					.compile("(?:Fact:table=\")([\\w\\d|_]+)(?:\" fact_column=\")([\\w\\d|_]+)(?:\";)");
 			Pattern elementPattern = Pattern.compile("(.*;)");
 			Matcher m;
 			String tableName = "";
@@ -494,34 +540,34 @@ public class BIToView extends Frame {
 			String keyName = "";
 			in.useDelimiter("\\z");
 			Matcher elementMatcher = elementPattern.matcher(in.next());
-			while(elementMatcher.find()){
+			while (elementMatcher.find()) {
 				String elementString = elementMatcher.group(0);
 				;
-				if((m = dimensionPattern.matcher(elementString)).matches()){
-//					for(int i = 0; i <= m.groupCount(); i++){
-//						System.out.println(i + " = " + m.group(i));
-//					}
+				if ((m = dimensionPattern.matcher(elementString)).matches()) {
+					// for(int i = 0; i <= m.groupCount(); i++){
+					// System.out.println(i + " = " + m.group(i));
+					// }
 					tableName = m.group(1);
 					concepts.addAll(parseConcepts(m.group(2)));
 					keyName = m.group(3);
 					dimensions.add(new CubeDimension(tableName, concepts, keyName));
 					concepts = new ArrayList<>();
-				}else if((m = factPattern.matcher(elementString)).matches()){
+				} else if ((m = factPattern.matcher(elementString)).matches()) {
 					tableName = m.group(1);
 					factColumn = m.group(2);
 					fact = new Fact(tableName, factColumn);
-				}else{
+				} else {
 					System.err.println("Invalid Input Element: " + elementString);
 				}
 			}
-			if(dimensions != null && fact != null){
+			if (dimensions != null && fact != null) {
 				BIToView mc = new BIToView(dimensions, fact);
-			}else if(dimensions != null){
+			} else if (dimensions != null) {
 				BIToView mc = new BIToView(dimensions);
-			}else if(fact != null){
+			} else if (fact != null) {
 				BIToView mc = new BIToView(fact);
 			}
-			
+
 		} else {
 			BIToView mc = new BIToView();
 		}

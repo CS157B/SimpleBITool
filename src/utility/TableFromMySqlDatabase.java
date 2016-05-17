@@ -14,9 +14,9 @@ public class TableFromMySqlDatabase extends JFrame
         ArrayList data = new ArrayList();
 
         //  Connect to an MySQL Database, run query, get result set
-        String url = "jdbc:mysql://localhost:3306/projectdb";
+        String url = "jdbc:mysql://localhost:3306/assignment2";
         String userid = "root";
-        String password = "Password1234!";
+        String password = "Maya1010!";
         //String sql = "SELECT * FROM product";
 
         // Java SE 7 has try-with-resources
@@ -103,7 +103,6 @@ public class TableFromMySqlDatabase extends JFrame
 //    public static void main(String[] args)
 //    {
 //        TableFromMySqlDatabase frame = new TableFromMySqlDatabase("SELECT * FROM product;");
-//        frame.setDefaultCloseOperation( EXIT_ON_CLOSE );
 //        frame.pack();
 //        frame.setVisible(true);
 //    }
