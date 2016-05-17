@@ -10,8 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -339,45 +341,46 @@ public class BIToView extends Frame {
 	}
 
 	public void filterWindow() {
+		if(cube.getDimensions().isEmpty()){
+			return;
+		}
 		JFrame fframe = new JFrame("Filter");
 		int windowWidth = 400; // Window width in pixels
 		int windowHeight = 150; // Window height in pixels
 		fframe.setBounds(50, 100, // Set position
 				windowWidth, windowHeight); // and size
 
-		String[] tables = { "Time", "Product", "Store" };
-		String[] time = { "Year", "Month", "Week" };
-		String[] store = { "store_street_address", "store_zip", "store_city", "store_county", "store_state" };
-		String[] product = { "department", "category", "subCategory" };
-		String[] operator = { "=", ">", "<", "<=", ">=" };
+		
+		
+		
+		
+		
+		String[] tables = new String[cube.getDimensions().size()], operator = new String[cube.getValidFilterOperators().size()];
+		operator = cube.getValidFilterOperators().toArray(operator);
+		tables = cube.getDimensions().stream().map(new Function<CubeDimension, String>() {
+
+			@Override
+			public String apply(CubeDimension t) {
+				return t.getTableName();
+			}
+		}).collect(Collectors.toList()).toArray(tables);
+		
 		final JComboBox column = new JComboBox();
-		JComboBox oper = new JComboBox(operator);
+		JComboBox<String> oper = new JComboBox(operator);
 		// Create the combo box, select item at index 4.
 		// Indices start at 0, so 4 specifies the pig.
-		JComboBox tlist = new JComboBox(tables);
+		JComboBox<String> tlist = new JComboBox(tables);
 		tlist.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				// JComboBox cb = (JComboBox)e.getSource();
 				column.removeAllItems();
 				String tablename = (String) tlist.getSelectedItem();
-				if (tablename.equals("Time")) {
-					for (int i = 0; i < time.length; i++) {
-						column.addItem(time[i]);
-					}
-				}
-				if (tablename.equals("Store")) {
-					for (int i = 0; i < store.length; i++) {
-						column.addItem(store[i]);
-					}
-				}
-				if (tablename.equals("Product")) {
-					for (int i = 0; i < product.length; i++) {
-						column.addItem(product[i]);
-					}
-				}
-
+				String[] conceptArr = new String[cube.getDimension(tablename).getConceptList().size()];
+				conceptArr = cube.getDimension(tablename).getConceptList().toArray(conceptArr);
+				column.setModel(new DefaultComboBoxModel<String>(conceptArr));
 			}
 		});
+		tlist.setSelectedIndex(0);
 		JTextField operand = new JTextField();
 		JButton button = new JButton("Submit");
 		button.addActionListener(new ActionListener() {
