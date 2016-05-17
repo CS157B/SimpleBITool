@@ -1,0 +1,4 @@
+Dimension:table="product", concepts="subcategory, category, department", key="product_key";
+Dimension:table="store", concepts="store_street_address, store_city, store_county, store_state, sales_region, fiscal_period, year", key="store_key";
+Dimension:table="time", concepts="day_number_overall, week_number_overall, Month, year", key="time_key";
+Fact:table="sales_fact" fact_column="dollar_sales";

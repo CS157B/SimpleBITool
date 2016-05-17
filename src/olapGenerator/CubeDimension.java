@@ -22,6 +22,10 @@ public class CubeDimension {
 	public CubeDimension(String tableName, String columnName, String keyName) {
 		this(tableName, columnName, keyName, true);
 	}
+	
+	public CubeDimension(String tableName, List<String> concepts, String keyName) {
+		this(tableName, concepts, keyName, true);
+	}
 
 	public CubeDimension(String tableName, String initialColumnName, String keyName, boolean isGrouped) {
 		this.tableName = tableName;
@@ -30,7 +34,22 @@ public class CubeDimension {
 		this.conceptHierarchy = new TreeMap<>();
 		currentHierarchyLevel = 0;
 		this.conceptHierarchy.put(currentHierarchyLevel, initialColumnName);
-		conceptHierarchy.get(currentHierarchyLevel);
+		//conceptHierarchy.get(currentHierarchyLevel);
+	}
+	
+	public CubeDimension(String tableName, List<String> concepts, String keyName, boolean isGrouped) {
+		this.tableName = tableName;
+		this.keyName = keyName;
+		this.isGrouped = isGrouped;
+		this.conceptHierarchy = new TreeMap<>();
+		currentHierarchyLevel = 0;
+		if(!concepts.isEmpty()){
+			this.conceptHierarchy.put(currentHierarchyLevel, concepts.get(0));
+			for(int i = 1; i < concepts.size(); i++){
+				this.addConceptLevel(i, concepts.get(i));
+			}
+		}
+		//conceptHierarchy.get(currentHierarchyLevel);
 	}
 
 	public Map<Integer, String> getConceptHierarchy() {

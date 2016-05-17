@@ -4,11 +4,15 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -30,56 +34,68 @@ public class BIToView extends Frame {
 	public DefaultListModel dimlistModel;
 	public DefaultListModel conlistModel;
 	public DefaultListModel fillistModel;
+
 	public BIToView() {
-		//cube.addDimension(d1);
+		this(null, null);
+	}
+
+	public BIToView(List<CubeDimension> loadedDimensions, Fact loadedFact) {
+		for (CubeDimension c : loadedDimensions) {
+				cube.addDimension(c);
+		}
+		if (loadedFact != null) {
+			cube.addFact(loadedFact);
+		}
+
+		// cube.addDimension(d1);
 		JFrame main = new JFrame("Simple Business Intelligence Tool");
 		main.setLayout(new BorderLayout());
 		main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		main.setMaximumSize(new Dimension(1000,2000));
+		main.setMaximumSize(new Dimension(1000, 2000));
 
 		// output Table View
 		JPanel p1 = new JPanel();
 		p1.setLayout(new BoxLayout(p1, BoxLayout.X_AXIS));
 		p1.setMaximumSize(new Dimension(100, 100));
-		text = new JTextArea(50,50);
+		text = new JTextArea(50, 50);
 		text.setEditable(false);
 		p1.add(text);
 		main.add(p1, BorderLayout.WEST);
 
 		JPanel p2 = new JPanel();
-		
+
 		// Dimensions
 		JLabel dLabel = new JLabel("Dimensions:");
 		dimlistModel = new DefaultListModel();
 		conlistModel = new DefaultListModel();
 		fillistModel = new DefaultListModel();
-		
+
 		dimensionBox = new JList(dimlistModel);
 		dimensionBox.setVisibleRowCount(5);
-		
-        Box box1 = Box.createVerticalBox();
-        Box box5 = Box.createVerticalBox();
+
+		Box box1 = Box.createVerticalBox();
+		Box box5 = Box.createVerticalBox();
 		JButton dimAdd = new JButton("+");
-		dimAdd.addActionListener(new ActionListener(){
+		dimAdd.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dimWindow();
-				
-	         }
+
+			}
 		});
 		JButton dimSub = new JButton("-");
-		dimSub.addActionListener(new ActionListener(){
+		dimSub.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				dimlistModel.removeElement((String)dimensionBox.getSelectedValue());
-				cube.removeDimension((String)dimensionBox.getSelectedValue());
+				dimlistModel.removeElement((String) dimensionBox.getSelectedValue());
+				cube.removeDimension((String) dimensionBox.getSelectedValue());
 				conlistModel.removeAllElements();
 				refreshTextarea();
-	         }
+			}
 		});
 		JButton addfact = new JButton("Add a Fact");
-		addfact.addActionListener(new ActionListener(){
+		addfact.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				factWindow();
-	         }
+			}
 		});
 		JScrollPane scrollPane_1 = new JScrollPane(dimensionBox);
 		dimensionBox.setVisibleRowCount(4);
@@ -92,68 +108,71 @@ public class BIToView extends Frame {
 		p2.add(box5);
 		p2.add(box1);
 		p2.add(addfact);
-		dimensionBox.addListSelectionListener(new ListSelectionListener(){
-			public void valueChanged(ListSelectionEvent e){
-				if(dimensionBox.getSelectedValue()!=null)
-				{
-				String select = (String)dimensionBox.getSelectedValue();
-				Map<Integer, String> concept =  cube.getDimension(select).getConceptHierarchy();
-				conlistModel.removeAllElements();
-				for(Map.Entry<Integer, String> entry: concept.entrySet()){
-					conlistModel.addElement(entry.getValue());
-				}
-				int index = cube.getDimension(select).getConceptList().indexOf(cube.getDimension(select).getCurrentConcept());
-				conceptBox.setSelectedIndex(index);
+		dimensionBox.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e) {
+				if (dimensionBox.getSelectedValue() != null) {
+					String select = (String) dimensionBox.getSelectedValue();
+					Map<Integer, String> concept = cube.getDimension(select).getConceptHierarchy();
+					conlistModel.removeAllElements();
+					for (Map.Entry<Integer, String> entry : concept.entrySet()) {
+						conlistModel.addElement(entry.getValue());
+					}
+					int index = cube.getDimension(select).getConceptList()
+							.indexOf(cube.getDimension(select).getCurrentConcept());
+					conceptBox.setSelectedIndex(index);
 				}
 			}
 		});
-		
+
 		// concepts
 		dLabel = new JLabel("Concept:");
-        Box box2 = Box.createVerticalBox();
-        Box box3 = Box.createVerticalBox();
-        Box box6 = Box.createVerticalBox();
-        
-        conceptBox = new JList(conlistModel);
-        conceptBox.setVisibleRowCount(5);
+		Box box2 = Box.createVerticalBox();
+		Box box3 = Box.createVerticalBox();
+		Box box6 = Box.createVerticalBox();
+
+		conceptBox = new JList(conlistModel);
+		conceptBox.setVisibleRowCount(5);
 		JButton conAdd = new JButton("+");
-		conAdd.addActionListener(new ActionListener(){
+		conAdd.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				conceptWindow((String)dimensionBox.getSelectedValue());
-			
-	         }
+				conceptWindow((String) dimensionBox.getSelectedValue());
+
+			}
 		});
 		JButton conSub = new JButton("-");
-		conSub.addActionListener(new ActionListener(){
+		conSub.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String select1 = (String)conceptBox.getSelectedValue();
+				String select1 = (String) conceptBox.getSelectedValue();
 				conlistModel.removeElement(select1);
-				cube.getDimension((String)dimensionBox.getSelectedValue())
-				.getConceptHierarchy().values().remove(select1);
-				
-	         }
+				cube.getDimension((String) dimensionBox.getSelectedValue()).getConceptHierarchy().values()
+						.remove(select1);
+
+			}
 		});
 		JButton rollUp = new JButton("Roll Up");
-		rollUp.addActionListener(new ActionListener(){
+		rollUp.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String table = (String)dimensionBox.getSelectedValue();
-				
+				String table = (String) dimensionBox.getSelectedValue();
+
 				cube.getDimension(table).rollUp();
-				int index = cube.getDimension(table).getConceptList().indexOf(cube.getDimension(table).getCurrentConcept());
+				int index = cube.getDimension(table).getConceptList()
+						.indexOf(cube.getDimension(table).getCurrentConcept());
+				
 				conceptBox.setSelectedIndex(index);
 				refreshTextarea();
-				
-	         }
+
+			}
 		});
 		JButton drillDown = new JButton("Drill Down");
-		drillDown.addActionListener(new ActionListener(){
+		drillDown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String table = (String)dimensionBox.getSelectedValue();
+				String table = (String) dimensionBox.getSelectedValue();
 				cube.getDimension(table).drillDown();
-				int index = cube.getDimension(table).getConceptList().indexOf(cube.getDimension(table).getCurrentConcept());
+				int index = cube.getDimension(table).getConceptList()
+						.indexOf(cube.getDimension(table).getCurrentConcept());
 				conceptBox.setSelectedIndex(index);
 				refreshTextarea();
-	         }
+			}
 		});
 		JScrollPane scrollPane_2 = new JScrollPane(conceptBox);
 		conceptBox.setVisibleRowCount(4);
@@ -168,31 +187,31 @@ public class BIToView extends Frame {
 		p2.add(box6);
 		p2.add(box2);
 		p2.add(box3);
-		
-		//filters
+
+		// filters
 		dLabel = new JLabel("Filter:");
-		
+
 		filterBox = new JList(fillistModel);
 		filterBox.setVisibleRowCount(5);
-        Box box4 = Box.createVerticalBox();
-        Box box7 = Box.createVerticalBox();
+		Box box4 = Box.createVerticalBox();
+		Box box7 = Box.createVerticalBox();
 		JButton filAdd = new JButton("+");
-		filAdd.addActionListener(new ActionListener(){
+		filAdd.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
+
 				filterWindow();
-			
-	         }
+
+			}
 		});
 		JButton filSub = new JButton("-");
-		filSub.addActionListener(new ActionListener(){
+		filSub.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
+
 				int indextoRemove = filterBox.getSelectedIndex();
 				fillistModel.remove(indextoRemove);
 				cube.removeFilter(indextoRemove);
-			
-	         }
+
+			}
 		});
 		JScrollPane scrollPane_3 = new JScrollPane(filterBox);
 		filterBox.setVisibleRowCount(4);
@@ -204,12 +223,12 @@ public class BIToView extends Frame {
 		box4.add(filSub);
 		p2.add(box7);
 		p2.add(box4);
-		
-		//Execute Button
+
+		// Execute Button
 		JPanel p3 = new JPanel();
 		JButton execute = new JButton("Execute");
 		p3.add(execute);
-		execute.addActionListener(new ActionListener(){
+		execute.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
@@ -219,218 +238,294 @@ public class BIToView extends Frame {
 				query.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				query.pack();
 				query.setVisible(true);
-				
+
 			}
 		});
-		
 
 		main.add(p2, BorderLayout.SOUTH);
 		main.add(p3, BorderLayout.CENTER);
 
 		main.pack();
 		main.setVisible(true);
+		refreshTextarea();
 	}
-	public void dimWindow()
-	{
-		JFrame dframe = new JFrame("Dimensions");
-	    int windowWidth = 400;           // Window width in pixels
-	    int windowHeight = 150;          // Window height in pixels
-	    dframe.setBounds(50, 100,       // Set position
-	         windowWidth, windowHeight);  // and size
-	    JButton button = new JButton("Submit");
-	    dframe.setLayout(new GridLayout(4, 2));
-	    
-	    dframe.add(new JLabel("Table Name:"));
-	    JTextField tname = new JTextField();
-	    dframe.add(tname);
-	    dframe.add(new JLabel("Initial Concept Column Name:"));
-	    JTextField cname = new JTextField();
-	    dframe.add(cname);
-	    dframe.add(new JLabel("Key Name:"));
-	    JTextField kname = new JTextField();
-	    dframe.add(kname);
-	    
-	    button.addActionListener(new ActionListener() {
-	        public void actionPerformed(ActionEvent e) {
-	        	CubeDimension dim = new CubeDimension(tname.getText(),cname.getText(),kname.getText());
-	        	cube.addDimension(dim);
-	        	dimlistModel.addElement(tname.getText());
-	        	refreshTextarea();
-	        	dframe.dispose();
-	        	
-	        	
-	        }
-	    });
-	    
-	    dframe.add(button);
-	    dframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    dframe.setVisible(true);        // Display the window
-	    
-	   
-	}
-	public void conceptWindow(String table)
-	{
-		JFrame cframe = new JFrame("Concept");
-	    int windowWidth = 400;           // Window width in pixels
-	    int windowHeight = 150;          // Window height in pixels
-	    cframe.setBounds(50, 100,       // Set position
-	         windowWidth, windowHeight);  // and size
-	    JTextField concept = new JTextField();
-	    JTextField colname = new JTextField();
-	    cframe.setLayout(new GridLayout(3, 2));
-	    cframe.add(new JLabel("Concept Level:"));
-	    cframe.add(concept);
-	    cframe.add(new JLabel("Column Name:"));
-	    cframe.add(colname);
-	    JButton button = new JButton("Submit");
-	    button.addActionListener(new ActionListener() {
-	        public void actionPerformed(ActionEvent e) {
 
-	        	cube.getDimension(table).addConceptLevel(Integer.parseInt(concept.getText()), colname.getText());
-	        	List<String> list = cube.getDimension(table).getConceptList();
-	        	conlistModel.removeAllElements();
-	        	for(String s:list){
-	        		
-	        			conlistModel.addElement(s);
-	        	}
-	        
-	        	cframe.dispose();
-	        }
-	    });
-	    cframe.add(button);
-	    
-	    
-	    cframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    cframe.setVisible(true);        // Display the window
-		
+	public BIToView(List<CubeDimension> dimensions) {
+		this(dimensions, null);
 	}
-	public void filterWindow()
-	{
-		JFrame fframe = new JFrame("Filter");
-		int windowWidth = 400;           // Window width in pixels
-	    int windowHeight = 150;          // Window height in pixels
-	    fframe.setBounds(50, 100,       // Set position
-	         windowWidth, windowHeight);  // and size
-	    
-	    
-		String[] tables = { "Time", "Product", "Store" };
-		String[] time = {"Year", "Month", "Week"};
- 		String[] store = {"store_street_address","store_zip", "store_city","store_county","store_state"};
- 		String[] product = {"department","category","subCategory"};
- 		String[] operator = {"=", ">", "<", "<=", ">="};
- 		final JComboBox column = new JComboBox();
- 		JComboBox oper = new JComboBox(operator);
-		//Create the combo box, select item at index 4.
-		//Indices start at 0, so 4 specifies the pig.
-		JComboBox tlist = new JComboBox(tables);
-		tlist.addActionListener(new ActionListener(){
+	
+	public BIToView(Fact fact){
+		this(null, fact);
+	}
+
+	public void dimWindow() {
+		JFrame dframe = new JFrame("Dimensions");
+		int windowWidth = 400; // Window width in pixels
+		int windowHeight = 150; // Window height in pixels
+		dframe.setBounds(50, 100, // Set position
+				windowWidth, windowHeight); // and size
+		JButton button = new JButton("Submit");
+		dframe.setLayout(new GridLayout(4, 2));
+
+		dframe.add(new JLabel("Table Name:"));
+		JTextField tname = new JTextField();
+		dframe.add(tname);
+		dframe.add(new JLabel("Initial Concept Column Name:"));
+		JTextField cname = new JTextField();
+		dframe.add(cname);
+		dframe.add(new JLabel("Key Name:"));
+		JTextField kname = new JTextField();
+		dframe.add(kname);
+
+		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-		        //JComboBox cb = (JComboBox)e.getSource();
+				CubeDimension dim = new CubeDimension(tname.getText(), cname.getText(), kname.getText());
+				cube.addDimension(dim);
+				dimlistModel.addElement(tname.getText());
+				refreshTextarea();
+				dframe.dispose();
+
+			}
+		});
+
+		dframe.add(button);
+		dframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		dframe.setVisible(true); // Display the window
+
+	}
+
+	public void conceptWindow(String table) {
+		JFrame cframe = new JFrame("Concept");
+		int windowWidth = 400; // Window width in pixels
+		int windowHeight = 150; // Window height in pixels
+		cframe.setBounds(50, 100, // Set position
+				windowWidth, windowHeight); // and size
+		JTextField concept = new JTextField();
+		JTextField colname = new JTextField();
+		cframe.setLayout(new GridLayout(3, 2));
+		cframe.add(new JLabel("Concept Level:"));
+		cframe.add(concept);
+		cframe.add(new JLabel("Column Name:"));
+		cframe.add(colname);
+		JButton button = new JButton("Submit");
+		button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				cube.getDimension(table).addConceptLevel(Integer.parseInt(concept.getText()), colname.getText());
+				List<String> list = cube.getDimension(table).getConceptList();
+				conlistModel.removeAllElements();
+				for (String s : list) {
+
+					conlistModel.addElement(s);
+				}
+
+				cframe.dispose();
+			}
+		});
+		cframe.add(button);
+
+		cframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		cframe.setVisible(true); // Display the window
+
+	}
+
+	public void filterWindow() {
+		JFrame fframe = new JFrame("Filter");
+		int windowWidth = 400; // Window width in pixels
+		int windowHeight = 150; // Window height in pixels
+		fframe.setBounds(50, 100, // Set position
+				windowWidth, windowHeight); // and size
+
+		String[] tables = { "Time", "Product", "Store" };
+		String[] time = { "Year", "Month", "Week" };
+		String[] store = { "store_street_address", "store_zip", "store_city", "store_county", "store_state" };
+		String[] product = { "department", "category", "subCategory" };
+		String[] operator = { "=", ">", "<", "<=", ">=" };
+		final JComboBox column = new JComboBox();
+		JComboBox oper = new JComboBox(operator);
+		// Create the combo box, select item at index 4.
+		// Indices start at 0, so 4 specifies the pig.
+		JComboBox tlist = new JComboBox(tables);
+		tlist.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				// JComboBox cb = (JComboBox)e.getSource();
 				column.removeAllItems();
-		        String tablename = (String)tlist.getSelectedItem();
-		        if(tablename.equals("Time")){
-		        	for(int i = 0;i<time.length;i++){
-		        		column.addItem(time[i]);
-		        	}
-		        }
-		        if(tablename.equals("Store")){
-		        	for(int i = 0;i<store.length;i++){
-		        		column.addItem(store[i]);
-		        	}
-		        }
-		        if(tablename.equals("Product")){
-		        	for(int i = 0;i<product.length;i++){
-		        		column.addItem(product[i]);
-		        	}
-		        }
-		        
-		        
-		        
-		    }
+				String tablename = (String) tlist.getSelectedItem();
+				if (tablename.equals("Time")) {
+					for (int i = 0; i < time.length; i++) {
+						column.addItem(time[i]);
+					}
+				}
+				if (tablename.equals("Store")) {
+					for (int i = 0; i < store.length; i++) {
+						column.addItem(store[i]);
+					}
+				}
+				if (tablename.equals("Product")) {
+					for (int i = 0; i < product.length; i++) {
+						column.addItem(product[i]);
+					}
+				}
+
+			}
 		});
 		JTextField operand = new JTextField();
 		JButton button = new JButton("Submit");
-	    button.addActionListener(new ActionListener() {
-	        public void actionPerformed(ActionEvent e) {
-	            String select2 =(String)oper.getSelectedItem();
-	            String table2 = (String)tlist.getSelectedItem();
-	            String column2 = (String)column.getSelectedItem();
-	            //System.out.println(select2);
-	        	
-	        	try {
-					Filter f = cube.addFilter(table2,column2, operand.getText(),select2);
-					
+		button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String select2 = (String) oper.getSelectedItem();
+				String table2 = (String) tlist.getSelectedItem();
+				String column2 = (String) column.getSelectedItem();
+				// System.out.println(select2);
+
+				try {
+					Filter f = cube.addFilter(table2, column2, operand.getText(), select2);
+
 					fillistModel.addElement(f.getWhereClause());
 				} catch (InvalidOperatorException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-	        	fframe.dispose();
-	        }
-	    });
-		
-		/*switch((String)tlist.getSelectedItem()){
-		
-		case "Time": column  = new JComboBox(time); break;
-		case "Store": column  = new JComboBox(store); break;
-		case "Product": column  = new JComboBox(product); break;
-		
-		}*/
-		
-		fframe.setLayout(new GridLayout(5,2));
-		fframe.add(new JLabel("Table Name"));fframe.add(tlist);
-		fframe.add(new JLabel("Column Name"));fframe.add(column);
-		fframe.add(new JLabel("Operator"));fframe.add(oper);
-		fframe.add(new JLabel("Operand"));fframe.add(operand);
-		
-		
-		
-	    
-	    fframe.add(button);
-	    
-	    fframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    fframe.setVisible(true);        // Display the window
-	    
+				fframe.dispose();
+			}
+		});
+
+		/*
+		 * switch((String)tlist.getSelectedItem()){
+		 * 
+		 * case "Time": column = new JComboBox(time); break; case "Store":
+		 * column = new JComboBox(store); break; case "Product": column = new
+		 * JComboBox(product); break;
+		 * 
+		 * }
+		 */
+
+		fframe.setLayout(new GridLayout(5, 2));
+		fframe.add(new JLabel("Table Name"));
+		fframe.add(tlist);
+		fframe.add(new JLabel("Column Name"));
+		fframe.add(column);
+		fframe.add(new JLabel("Operator"));
+		fframe.add(oper);
+		fframe.add(new JLabel("Operand"));
+		fframe.add(operand);
+
+		fframe.add(button);
+
+		fframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		fframe.setVisible(true); // Display the window
+
 	}
 
-	public void factWindow(){
-		
+	public void factWindow() {
+
 		JFrame factframe = new JFrame("Fact");
-	    int windowWidth = 400;           // Window width in pixels
-	    int windowHeight = 150;          // Window height in pixels
-	    factframe.setBounds(50, 100,       // Set position
-	         windowWidth, windowHeight);  // and size
-	    
-	    factframe.setLayout(new GridLayout(3, 2));
-	    
-	    factframe.add(new JLabel("Table Name:"));
-	    JTextField tname = new JTextField();
-	    factframe.add(tname);
-	    factframe.add(new JLabel("column Name:"));
-	    JTextField cname = new JTextField();
-	    factframe.add(cname);
-	    JButton button = new JButton("Submit");
-	    button.addActionListener(new ActionListener(){
-	    	public void actionPerformed(ActionEvent e){
-	    		fact = new Fact(tname.getText(),cname.getText());
-	    		cube.addFact(fact);
-	    		refreshTextarea();
-	    		factframe.dispose();
-	    	}
-	    });
-	    factframe.add(button);
-	    
-	    factframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    factframe.setVisible(true);        // Display the window
-		
+		int windowWidth = 400; // Window width in pixels
+		int windowHeight = 150; // Window height in pixels
+		factframe.setBounds(50, 100, // Set position
+				windowWidth, windowHeight); // and size
+
+		factframe.setLayout(new GridLayout(3, 2));
+
+		factframe.add(new JLabel("Table Name:"));
+		JTextField tname = new JTextField();
+		factframe.add(tname);
+		factframe.add(new JLabel("column Name:"));
+		JTextField cname = new JTextField();
+		factframe.add(cname);
+		JButton button = new JButton("Submit");
+		button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				fact = new Fact(tname.getText(), cname.getText());
+				cube.addFact(fact);
+				refreshTextarea();
+				factframe.dispose();
+			}
+		});
+		factframe.add(button);
+
+		factframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		factframe.setVisible(true); // Display the window
+
 	}
-	
-	public void refreshTextarea(){
+
+	public void refreshTextarea() {
 		text.setText(cube.generateCubeSQLString());
 	}
 	
-	public static void main(String[] args) {
-		BIToView mc = new BIToView();
+	public void refreshLists(){
+		
+	}
+	
+	public int findIndexInListModel(ListModel<String> model, String targetString){	
+		for(int i = 0; i < model.getSize(); i++){
+			if(model.getElementAt(i).equals(targetString)){
+				return i;
+			}
+		}
+		return -1;
+		
+	}
+
+	public static List<String> parseConcepts(String conceptsString){
+		Pattern stringPattern = Pattern.compile("([\\w\\d|_]+)");
+		ArrayList<String> stringList = new ArrayList<>();
+		Matcher m = stringPattern.matcher(conceptsString);
+		while(m.find()){
+			stringList.add(m.group(0));
+		}
+		return stringList;
+	}
+	
+	@SuppressWarnings("unused")
+	public static void main(String[] args) throws FileNotFoundException {
+		if (args.length == 1) {
+			List<CubeDimension> dimensions = new ArrayList();
+			Fact fact= null;
+			Scanner in = new Scanner(new File(args[0]));
+			Pattern dimensionPattern = Pattern.compile(
+					"(?:Dimension:\\s*?table=\")([\\w\\d|_]*)(?:\",\\s*?)(?:concepts=\"(.*)\")(?:, key=\")([\\w\\d|_]+)(?:\";)");
+			Pattern factPattern = Pattern.compile("(?:Fact:table=\")([\\w\\d|_]+)(?:\" fact_column=\")([\\w\\d|_]+)(?:\";)");
+			Pattern elementPattern = Pattern.compile("(.*;)");
+			Matcher m;
+			String tableName = "";
+			String factColumn = "";
+			List<String> concepts = new ArrayList<>();
+			String keyName = "";
+			in.useDelimiter("\\z");
+			Matcher elementMatcher = elementPattern.matcher(in.next());
+			while(elementMatcher.find()){
+				String elementString = elementMatcher.group(0);
+				;
+				if((m = dimensionPattern.matcher(elementString)).matches()){
+//					for(int i = 0; i <= m.groupCount(); i++){
+//						System.out.println(i + " = " + m.group(i));
+//					}
+					tableName = m.group(1);
+					concepts.addAll(parseConcepts(m.group(2)));
+					keyName = m.group(3);
+					dimensions.add(new CubeDimension(tableName, concepts, keyName));
+					concepts = new ArrayList<>();
+				}else if((m = factPattern.matcher(elementString)).matches()){
+					tableName = m.group(1);
+					factColumn = m.group(2);
+					fact = new Fact(tableName, factColumn);
+				}else{
+					System.err.println("Invalid Input Element: " + elementString);
+				}
+			}
+			if(dimensions != null && fact != null){
+				BIToView mc = new BIToView(dimensions, fact);
+			}else if(dimensions != null){
+				BIToView mc = new BIToView(dimensions);
+			}else if(fact != null){
+				BIToView mc = new BIToView(fact);
+			}
+			
+		} else {
+			BIToView mc = new BIToView();
+		}
+
 	}
 
 }
