@@ -49,13 +49,16 @@ public class BIToView extends Frame {
 		if (loadedFact != null) {
 			cube.addFact(loadedFact);
 		}
+		
+		
 
 		// cube.addDimension(d1);
 		JFrame main = new JFrame("Simple Business Intelligence Tool");
 		main.setLayout(new BorderLayout());
 		main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		main.setMaximumSize(new Dimension(1000, 2000));
-
+		main.setMinimumSize(new Dimension(1000, 1000));
+		main.setResizable(false);
+		
 		// output Table View
 		JPanel p1 = new JPanel();
 		p1.setLayout(new BoxLayout(p1, BoxLayout.X_AXIS));
@@ -187,7 +190,7 @@ public class BIToView extends Frame {
 		JScrollPane scrollPane_2 = new JScrollPane(conceptBox);
 		conceptBox.setVisibleRowCount(4);
 		conceptBox.setFixedCellHeight(20);
-		conceptBox.setFixedCellWidth(60);
+		conceptBox.setFixedCellWidth(150);
 		box6.add(dLabel);
 		box6.add(scrollPane_2);
 		box2.add(conAdd);
@@ -365,6 +368,11 @@ public class BIToView extends Frame {
 			}
 		}).collect(Collectors.toList()).toArray(tables);
 		
+		List<String> typeList = Cube.VALID_OPERAND_TYPES;
+		String[] typeArr = new String[typeList.size()];
+		typeArr = typeList.toArray(typeArr);
+		JComboBox<String> typeComboBox = new JComboBox(typeArr);
+		
 		final JComboBox column = new JComboBox();
 		JComboBox<String> oper = new JComboBox(operator);
 		// Create the combo box, select item at index 4.
@@ -388,10 +396,11 @@ public class BIToView extends Frame {
 				String select2 = (String) oper.getSelectedItem();
 				String table2 = (String) tlist.getSelectedItem();
 				String column2 = (String) column.getSelectedItem();
+				String operandType = (String) typeComboBox.getSelectedItem();
 				// System.out.println(select2);
 
 				try {
-					Filter f = cube.addFilter(table2, column2, operand.getText(), select2, "");
+					Filter f = cube.addFilter(table2, column2, operand.getText(), select2, operandType);
 					refreshFilterList();
 					refreshTextarea();
 				} catch (InvalidOperatorException e1) {
@@ -415,7 +424,7 @@ public class BIToView extends Frame {
 		 * }
 		 */
 
-		fframe.setLayout(new GridLayout(5, 2));
+		fframe.setLayout(new GridLayout(6, 2));
 		fframe.add(new JLabel("Table Name"));
 		fframe.add(tlist);
 		fframe.add(new JLabel("Column Name"));
@@ -424,6 +433,8 @@ public class BIToView extends Frame {
 		fframe.add(oper);
 		fframe.add(new JLabel("Operand"));
 		fframe.add(operand);
+		fframe.add(new JLabel("Operand Type"));
+		fframe.add(typeComboBox);
 
 		fframe.add(button);
 

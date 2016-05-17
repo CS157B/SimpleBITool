@@ -127,7 +127,7 @@ public class Cube {
 		if(!VALID_OPERAND_TYPES.contains(operandType)){
 			throw new InvalidOperandTypeException();
 		}
-			Filter f = new Filter(tableName, columnName, operand2, operator);
+			Filter f = new Filter(tableName, columnName, operand2, operator, operandType);
 		filters.add(f);
 		return f;
 	}
@@ -150,9 +150,10 @@ public class Cube {
 		private String columnName;
 		private String operand2;
 		private String operator;
+		private String operandType;
 		
 
-		public Filter(String tableName, String columnName, String operand2, String operator) throws InvalidOperatorException {
+		public Filter(String tableName, String columnName, String operand2, String operator, String operandType) throws InvalidOperatorException {
 			this.tableName = tableName;
 			this.columnName = columnName;
 			this.operand2 = operand2;
@@ -161,9 +162,13 @@ public class Cube {
 			}else{
 				throw new InvalidOperatorException(operator);
 			}
+			this.operandType = operandType;
 		}
 
 		public String getWhereClause(){
+			if(operandType.equals("INT")){
+				return this.tableName + "." + this.columnName + " " + operator + " " + operand2 + " ";
+			}else
 				return this.tableName + "." + this.columnName + " " + operator + " \"" + operand2 + "\"";
 		}
 
